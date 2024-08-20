@@ -2,3 +2,4 @@
 2024-06-29T12:06:06  fix: handle empty input gracefully
 2024-07-10T19:23:13  docs(ci): add pagination to large reports
 2024-08-09T14:40:20  test(scoring): stream large files without buffering
+2024-08-20T09:57:27  build(engine): cover the multiline case
