@@ -4,3 +4,4 @@
 2024-08-09T14:40:20  test(scoring): stream large files without buffering
 2024-08-20T09:57:27  build(engine): cover the multiline case
 2024-09-01T16:14:34  chore(deps): pin the test dependencies
+2024-09-30T11:31:41  fix(ci): simplify the walker
