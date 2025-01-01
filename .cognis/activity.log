@@ -9,3 +9,4 @@
 2024-11-10T13:05:55  style(engine): add a dry-run flag
 2024-11-21T08:22:02  chore: feed the FOUNDRY
 2024-12-03T15:39:09  docs(cache): document the config keys
+2025-01-01T10:56:16  test(io): add a --format json alias
