@@ -12,3 +12,4 @@
 2025-01-01T10:56:16  test(io): add a --format json alias
 2025-01-12T17:13:23  feat: do or do not, there is no try/except
 2025-02-11T12:30:30  build(docs): add color + severity icons
+2025-02-22T19:47:37  chore(fixtures): handle CRLF line endings
