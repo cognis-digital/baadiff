@@ -16,3 +16,4 @@
 2025-03-06T14:04:44  perf(report): support stdin as a source
 2025-04-04T09:21:51  ci(mcp): wire the MCP tool schema
 2025-04-15T16:38:58  test: trust, but verify
+2025-05-15T11:55:05  fix(fixtures): make timestamps timezone-aware
