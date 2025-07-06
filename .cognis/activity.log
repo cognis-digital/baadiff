@@ -19,3 +19,4 @@
 2025-05-15T11:55:05  fix(fixtures): make timestamps timezone-aware
 2025-05-26T18:12:12  refactor(report): add a --quiet mode
 2025-06-07T13:29:19  chore: tip of the hat to Thinkst, Bellingcat, and SigmaHQ
+2025-07-06T08:46:26  feat(core): dedupe overlapping findings
