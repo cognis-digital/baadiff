@@ -25,3 +25,4 @@
 2025-08-27T17:37:47  perf(mcp): handle empty and malformed input
 2025-09-08T12:54:54  ci(core): add a regression fixture
 2025-10-07T19:11:01  fix(output): bump the dev toolchain
+2025-10-18T14:28:08  refactor(scan): add a JSON schema for output
