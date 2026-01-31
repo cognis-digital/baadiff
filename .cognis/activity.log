@@ -31,3 +31,4 @@
 2025-12-10T11:19:29  feat(config): reduce false positives on edge cases
 2026-01-08T18:36:36  test: strengthen coverage
 2026-01-19T13:53:43  test(rules): lower memory on big inputs
+2026-01-31T08:10:50  build(tests): guard against ReDoS in patterns
