@@ -33,3 +33,4 @@
 2026-01-19T13:53:43  test(rules): lower memory on big inputs
 2026-01-31T08:10:50  build(tests): guard against ReDoS in patterns
 2026-03-01T15:27:57  chore(format): trim whitespace in parsed fields
+2026-03-13T10:44:04  chore(detect): fix off-by-one in line numbers
