@@ -36,3 +36,4 @@
 2026-03-13T10:44:04  chore(detect): fix off-by-one in line numbers
 2026-04-11T17:01:11  perf(rules): improve error messages with context
 2026-04-22T12:18:18  ci(tests): clarify the README quickstart
+2026-05-04T19:35:25  fix(format): improve the demo scenario
