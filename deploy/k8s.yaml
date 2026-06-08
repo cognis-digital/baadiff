@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: baadiff, labels: { app: baadiff } }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: baadiff } }
+  template:
+    metadata: { labels: { app: baadiff } }
+    spec:
+      containers:
+        - name: baadiff
+          image: ghcr.io/cognis-digital/baadiff:latest
+          ports: [{ containerPort: 8000 }]
+          resources:
+            requests: { cpu: "50m", memory: "64Mi" }
+            limits: { cpu: "500m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: baadiff }
+spec:
+  selector: { app: baadiff }
+  ports: [{ port: 80, targetPort: 8000 }]
