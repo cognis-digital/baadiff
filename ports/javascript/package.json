@@ -1,0 +1,10 @@
+{
+  "name": "@cognis/baadiff",
+  "version": "0.2.0",
+  "description": "JavaScript port of baadiff (Cognis Neural Suite)",
+  "bin": {
+    "baadiff": "index.js"
+  },
+  "license": "LicenseRef-COCL-1.0",
+  "type": "module"
+}
