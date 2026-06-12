@@ -20,7 +20,7 @@ import json
 import re
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
-from typing import Callable, Iterable, Optional
+from typing import Callable, Iterable
 
 # --------------------------------------------------------------------------- #
 # Data model

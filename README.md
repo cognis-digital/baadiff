@@ -16,7 +16,7 @@
 </div>
 
 ```bash
-pip install cognis-baadiff
+pip install "git+https://github.com/cognis-digital/baadiff.git"
 baadiff scan .            # â†’ prioritized findings in seconds
 ```
 
@@ -49,7 +49,7 @@ A SOC-2-style 'are we HIPAA-shippable?' scanner that outputs a shareable badge â
 ## Quick start
 
 ```bash
-pip install cognis-baadiff
+pip install "git+https://github.com/cognis-digital/baadiff.git"
 baadiff --version
 baadiff scan .                       # scan current project
 baadiff scan . --format json         # machine-readable
