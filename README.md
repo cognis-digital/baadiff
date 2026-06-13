@@ -16,9 +16,15 @@
 </div>
 
 ```bash
-pip install cognis-baadiff
+pip install "git+https://github.com/cognis-digital/baadiff.git"
 baadiff scan .            # → prioritized findings in seconds
 ```
+
+<!-- cognis:layman:start -->
+## What is this?
+
+BAADIFF is a command-line tool that checks your software project or server configuration for common HIPAA Security Rule violations. Point it at any codebase or infrastructure file and it instantly flags risky patterns — like hardcoded passwords, unencrypted connections, or missing audit logs — then gives you a letter-grade readiness score. It is built for developers and DevOps teams at healthcare startups who need a fast, automated way to spot compliance gaps before shipping patient-data software.
+<!-- cognis:layman:end -->
 
 ## Contents
 
@@ -46,10 +52,56 @@ A SOC-2-style 'are we HIPAA-shippable?' scanner that outputs a shareable badge �
 <div align="right"><a href="#top">↑ back to top</a></div>
 
 <a name="quick-start"></a>
+<!-- cognis:domains:start -->
+## Domains
+
+**Primary domain:** Cyber & Security  ·  **JTF MERIDIAN division:** NULLBYTE · SPECTER
+
+**Topics:** `cognis` `security` `infosec` `cybersecurity` `blue-team`
+
+Part of the **Cognis Neural Suite** — 300+ source-available tools organized across 12 domains under the JTF MERIDIAN command structure. See the [suite on GitHub](https://github.com/cognis-digital) and [jtf-meridian](https://github.com/cognis-digital/jtf-meridian) for how the pieces fit together.
+<!-- cognis:domains:end -->
+
+<!-- cognis:install:start -->
+## Install
+
+`baadiff` is source-available (not published to PyPI) — every method below installs
+straight from GitHub. Pick whichever you prefer; the one-line scripts auto-detect
+the best tool available on your machine.
+
+**One-liner (Linux / macOS):**
+```sh
+curl -fsSL https://raw.githubusercontent.com/cognis-digital/baadiff/HEAD/install.sh | sh
+```
+
+**One-liner (Windows PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/cognis-digital/baadiff/HEAD/install.ps1 | iex
+```
+
+**Or install manually — any one of:**
+```sh
+pipx install "git+https://github.com/cognis-digital/baadiff.git"     # isolated (recommended)
+uv tool install "git+https://github.com/cognis-digital/baadiff.git"  # uv
+pip install "git+https://github.com/cognis-digital/baadiff.git"      # pip
+```
+
+**From source:**
+```sh
+git clone https://github.com/cognis-digital/baadiff.git
+cd baadiff && pip install .
+```
+
+Then run:
+```sh
+baadiff --help
+```
+<!-- cognis:install:end -->
+
 ## Quick start
 
 ```bash
-pip install cognis-baadiff
+pip install "git+https://github.com/cognis-digital/baadiff.git"
 baadiff --version
 baadiff scan .                       # scan current project
 baadiff scan . --format json         # machine-readable

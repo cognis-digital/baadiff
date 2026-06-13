@@ -20,7 +20,7 @@ import json
 import re
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
-from typing import Callable, Iterable, Optional
+from typing import Callable, Iterable
 
 # --------------------------------------------------------------------------- #
 # Data model
@@ -213,10 +213,11 @@ _ENCRYPTION_AT_REST = re.compile(
 )
 _AUDIT_LOG = re.compile(
     r"(?i)(audit[_-]?log|cloudtrail|access[_-]?log|enable_logging|"
-    r"log_group|logging\.(info|warning|error)|structured[_-]?log)"
+    r"log_group|logging\.(info|warning|error)|structured[_-]?log|"
+    r"\blog\.(info|warning|error|debug|critical)\b)"
 )
 _AUTH = re.compile(
-    r"(?i)(oauth|openid|jwt|authenticat|authoriz|rbac|@login_required|"
+    r"(?i)(oauth|openid|jwt|authenticat|authoriz|rbac|login_required|"
     r"ensure_authenticated|session\[|mfa|two[_-]?factor|bcrypt|argon2|pbkdf2)"
 )
 _BACKUP = re.compile(

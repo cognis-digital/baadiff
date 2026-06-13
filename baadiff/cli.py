@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 
 from . import TOOL_NAME, TOOL_VERSION
-from .core import scan_path, score_findings, badge_for, SEVERITY_ORDER
+from .core import scan_path, score_findings, badge_for
 
 
 def _color(s: str, code: str, on: bool) -> str:
