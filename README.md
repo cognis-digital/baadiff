@@ -20,6 +20,31 @@ pip install cognis-baadiff
 baadiff scan .            # → prioritized findings in seconds
 ```
 
+## Usage — step by step
+
+`baadiff` scans a repo or manifest for HIPAA Security Rule gaps and scores compliance.
+
+1. **Install**:
+   ```bash
+   pip install -e .
+   ```
+2. **Scan a file or directory**:
+   ```bash
+   baadiff scan ./my-service
+   ```
+3. **Set a passing threshold** (score out of 100) and disable color for logs:
+   ```bash
+   baadiff scan ./my-service --threshold 90 --no-color
+   ```
+4. **Read the output** as JSON, and emit a status badge:
+   ```bash
+   baadiff scan ./my-service --format json --badge hipaa-badge.svg
+   ```
+5. **Automate in CI** — the scan exits non-zero when the score is below `--threshold`:
+   ```bash
+   baadiff scan . --threshold 80 --format json
+   ```
+
 ## Contents
 
 - [Why baadiff?](#why) · [Features](#features) · [Quick start](#quick-start) · [Example](#example) · [Architecture](#architecture) · [AI stack](#ai-stack) · [How it compares](#how-it-compares) · [Integrations](#integrations) · [Install anywhere](#install-anywhere) · [Related](#related) · [Contributing](#contributing)
