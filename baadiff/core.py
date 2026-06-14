@@ -141,8 +141,8 @@ _PLACEHOLDER = re.compile(
 
 INSECURE_URL = re.compile(r"(?i)\bhttp://(?!localhost|127\.0\.0\.1|0\.0\.0\.0)[\w.-]+")
 WEAK_HASH = re.compile(r"(?i)\b(md5|sha1)\b\s*\(")
-VERIFY_FALSE = re.compile(r"(?i)(verify\s*=\s*False|rejectUnauthorized\s*:\s*false|InsecureSkipVerify\s*:\s*true)")
-WILDCARD_IAM = re.compile(r'["\']Action["\']\s*:\s*["\']\*["\']|["\']Resource["\']\s*:\s*["\']\*["\']')
+VERIFY_FALSE = re.compile(r"(?i)(verify\s*=\s*False|rejectUnauthorized\s*:\s*false|InsecureSkipVerify\s*:\s*true)")  # noqa: E501
+WILDCARD_IAM = re.compile(r'["\']Action["\']\s*:\s*["\']\*["\']|["\']Resource["\']\s*:\s*["\']\*["\']')  # noqa: E501
 OPEN_INGRESS = re.compile(r"0\.0\.0\.0/0")
 
 
@@ -164,7 +164,7 @@ def _check_secrets(text: str, fname: str, state: dict) -> list:
 def _check_transport(text: str, fname: str, state: dict) -> list:
     out = []
     for i, line in enumerate(text.splitlines(), 1):
-        if INSECURE_URL.search(line) and "://schemas" not in line and "w3.org" not in line:
+        if INSECURE_URL.search(line) and "://schemas" not in line and "w3.org" not in line:  # noqa: E501
             out.append(("high", i,
                         "Plaintext http:// endpoint -- transmission security "
                         "(164.312(e)(1)) expects encryption in transit (TLS).",
@@ -239,7 +239,7 @@ _INTEGRITY = re.compile(
 CHECKS = [
     {"id": "BD001", "title": "No hardcoded secrets / credentials",
      "safeguard": "164.312(a)(2)(i)", "kind": "scan", "fn": _check_secrets},
-    {"id": "BD002", "title": "Encryption in transit (no plaintext HTTP / TLS verify on)",
+    {"id": "BD002", "title": "Encryption in transit (no plaintext HTTP / TLS verify on)",  # noqa: E501
      "safeguard": "164.312(e)(1)", "kind": "scan", "fn": _check_transport},
     {"id": "BD003", "title": "No weak cryptographic hashing of ePHI",
      "safeguard": "164.312(c)(1)", "kind": "scan", "fn": _check_crypto},
@@ -273,6 +273,13 @@ def scan_text(text: str, fname: str = "<text>") -> list:
     Returns a list of Finding (fails only). Presence checks need the full
     corpus, so use :func:`scan_path` for a complete scorecard.
     """
+    if text is None:
+        raise TypeError("scan_text: text must be a str, got None")
+    if not isinstance(text, str):
+        raise TypeError(
+            f"scan_text: text must be a str, got {type(text).__name__}"
+        )
+    fname = str(fname) if fname is not None else "<text>"
     findings: list = []
     state: dict = {}
     for chk in CHECKS:
@@ -293,7 +300,14 @@ def scan_path(path) -> list:
     Per-line 'scan' checks emit a Finding per hit. 'presence' checks emit a
     single pass/fail Finding for the whole corpus.
     """
-    root = Path(path)
+    if path is None:
+        raise ValueError("scan_path: path argument must not be None")
+    try:
+        root = Path(path)
+    except TypeError as exc:
+        raise TypeError(
+            f"scan_path: path must be str or Path, got {type(path).__name__}"
+        ) from exc
     if not root.exists():
         raise FileNotFoundError(f"path not found: {path}")
 
@@ -370,6 +384,18 @@ def score_findings(findings: list, pass_threshold: int = 80) -> Scorecard:
     Deductions are weighted by severity and capped per check id so a single
     noisy file cannot dominate the score.
     """
+    if findings is None:
+        findings = []
+    try:
+        pass_threshold = int(pass_threshold)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            f"pass_threshold must be an integer 0-100, got {pass_threshold!r}"
+        ) from exc
+    if not (0 <= pass_threshold <= 100):
+        raise ValueError(
+            f"pass_threshold must be 0-100, got {pass_threshold}"
+        )
     fails = [f for f in findings if f.status == "fail"]
     passes = [f for f in findings if f.status == "pass"]
 

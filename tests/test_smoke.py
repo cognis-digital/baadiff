@@ -108,3 +108,84 @@ def test_cli_version():
     )
     assert proc.returncode == 0
     assert baadiff.TOOL_VERSION in proc.stdout
+
+
+# ---------------------------------------------------------------------------
+# Hardening tests: error paths, edge cases, and input validation
+# ---------------------------------------------------------------------------
+
+def test_scan_path_missing_file():
+    """scan_path raises FileNotFoundError for a non-existent path."""
+    with __import__("pytest").raises(FileNotFoundError, match="path not found"):
+        core.scan_path("/nonexistent/path/does_not_exist_xyz")
+
+
+def test_scan_path_missing_file_cli_exit2():
+    """CLI returns exit code 2 with an error message for a missing path."""
+    proc = subprocess.run(
+        [sys.executable, "-m", "baadiff", "scan", "/no/such/path/xyz"],
+        cwd=str(REPO), capture_output=True, text=True,
+    )
+    assert proc.returncode == 2
+    assert "error" in proc.stderr.lower()
+
+
+def test_cli_threshold_out_of_range():
+    """--threshold outside 0-100 returns exit code 2 with an error."""
+    for bad in ["-1", "101", "200"]:
+        proc = subprocess.run(
+            [sys.executable, "-m", "baadiff", "scan", str(DEMO),
+             "--threshold", bad],
+            cwd=str(REPO), capture_output=True, text=True,
+        )
+        assert proc.returncode == 2, f"expected 2 for threshold={bad}"
+        assert "error" in proc.stderr.lower()
+
+
+def test_score_findings_empty_list():
+    """score_findings on an empty list returns a valid all-pass scorecard."""
+    sc = core.score_findings([])
+    assert sc.score == 100
+    assert sc.failed == 0
+    assert sc.passed == 0
+    assert sc.grade == "A"
+
+
+def test_score_findings_invalid_threshold():
+    """score_findings raises ValueError for an out-of-range pass_threshold."""
+    import pytest
+    with pytest.raises(ValueError, match="pass_threshold"):
+        core.score_findings([], pass_threshold=150)
+    with pytest.raises(ValueError, match="pass_threshold"):
+        core.score_findings([], pass_threshold=-5)
+
+
+def test_scan_text_none_raises():
+    """scan_text with None raises TypeError."""
+    import pytest
+    with pytest.raises(TypeError, match="scan_text"):
+        core.scan_text(None)
+
+
+def test_scan_path_empty_directory(tmp_path):
+    """scan_path on an empty directory returns presence-only findings (no crash)."""
+    sc = core.score_findings(core.scan_path(tmp_path))
+    # Empty dir has no evidence of any control — all presence checks fail.
+    assert sc.failed > 0
+    assert sc.passed == 0
+    # Score is well-defined and in range.
+    assert 0 <= sc.score <= 100
+
+
+def test_badge_unreadable_path_cli_exit2(tmp_path):
+    """Writing badge to an unwritable path returns exit code 2."""
+    # Create a directory where the badge file should be — writing to it fails.
+    bad_badge = tmp_path / "subdir_not_file"
+    bad_badge.mkdir()
+    proc = subprocess.run(
+        [sys.executable, "-m", "baadiff", "scan", str(DEMO),
+         "--badge", str(bad_badge)],
+        cwd=str(REPO), capture_output=True, text=True,
+    )
+    assert proc.returncode == 2
+    assert "error" in proc.stderr.lower()

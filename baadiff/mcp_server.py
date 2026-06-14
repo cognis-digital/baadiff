@@ -1,6 +1,11 @@
-"""BAADIFF MCP server — exposes scan() as an MCP tool for Cognis.Studio."""
+"""BAADIFF MCP server -- exposes baadiff_scan() as an MCP tool."""
 from __future__ import annotations
-from baadiff.core import scan, to_json
+
+import json
+import sys
+
+from baadiff.core import scan_path, score_findings
+
 
 def serve() -> int:
     """Start an MCP stdio server. Requires the optional 'mcp' extra:
@@ -8,15 +13,28 @@ def serve() -> int:
     """
     try:
         from mcp.server.fastmcp import FastMCP
-    except Exception:
-        print("Install the MCP extra: pip install 'cognis-baadiff[mcp]'")
+    except ImportError:
+        print(
+            "Install the MCP extra: pip install 'cognis-baadiff[mcp]'",
+            file=sys.stderr,
+        )
         return 1
     app = FastMCP("baadiff")
 
     @app.tool()
     def baadiff_scan(target: str) -> str:
-        """Scan a repo or infra manifest for HIPAA Security Rule gaps and produce a Business Associate readiness scorecard.. Returns JSON findings."""
-        return to_json(scan(target))
+        """Scan a repo or infra manifest for HIPAA Security Rule gaps.
+
+        Returns JSON findings as a Business Associate readiness scorecard.
+        """
+        if not target or not target.strip():
+            return json.dumps({"error": "target path must not be empty"})
+        try:
+            findings = scan_path(target)
+        except (FileNotFoundError, ValueError, TypeError) as exc:
+            return json.dumps({"error": str(exc)})
+        sc = score_findings(findings)
+        return json.dumps(sc.to_dict(), indent=2)
 
     app.run()
     return 0

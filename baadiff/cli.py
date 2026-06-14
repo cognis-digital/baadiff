@@ -35,7 +35,7 @@ def _render_table(scorecard, color: bool) -> str:
     sev_code = {"critical": "1;31", "high": "31", "medium": "33",
                 "low": "36", "info": "32"}
     lines.append("")
-    lines.append(_color("  BAADIFF — HIPAA Security Rule Readiness",
+    lines.append(_color("  BAADIFF -- HIPAA Security Rule Readiness",
                         "1;37", color))
     lines.append("  " + "-" * 56)
 
@@ -77,19 +77,45 @@ def _render_table(scorecard, color: bool) -> str:
 
 
 def _cmd_scan(args) -> int:
+    # Validate --threshold range before doing any I/O.
+    if not (0 <= args.threshold <= 100):
+        print(
+            f"error: --threshold must be between 0 and 100, got {args.threshold}",
+            file=sys.stderr,
+        )
+        return 2
+
     try:
         findings = scan_path(args.path)
     except FileNotFoundError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
+    except PermissionError as e:
+        print(f"error: permission denied - {e}", file=sys.stderr)
+        return 2
+    except OSError as e:
+        print(f"error: could not read path - {e}", file=sys.stderr)
+        return 2
 
-    scorecard = score_findings(findings, pass_threshold=args.threshold)
+    try:
+        scorecard = score_findings(findings, pass_threshold=args.threshold)
+    except ValueError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
 
     if args.badge:
-        Path(args.badge).write_text(badge_for(scorecard), encoding="utf-8")
+        try:
+            Path(args.badge).write_text(badge_for(scorecard), encoding="utf-8")
+        except OSError as e:
+            print(f"error: could not write badge file - {e}", file=sys.stderr)
+            return 2
 
     if args.format == "json":
-        print(json.dumps(scorecard.to_dict(), indent=2))
+        try:
+            print(json.dumps(scorecard.to_dict(), indent=2))
+        except (TypeError, ValueError) as e:
+            print(f"error: failed to serialize results - {e}", file=sys.stderr)
+            return 2
     else:
         use_color = sys.stdout.isatty() and not args.no_color
         print(_render_table(scorecard, use_color))
@@ -101,7 +127,7 @@ def _cmd_scan(args) -> int:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog=TOOL_NAME,
-        description="BAADIFF — scan a repo or manifest for HIPAA Security "
+        description="BAADIFF -- scan a repo or manifest for HIPAA Security "
                     "Rule gaps and produce an are-we-shippable readiness "
                     "scorecard with a badge.",
         epilog="examples:\n"
@@ -139,7 +165,14 @@ def main(argv=None) -> int:
     if not getattr(args, "command", None):
         parser.print_help()
         return 0
-    return args.func(args)
+    try:
+        return args.func(args)
+    except KeyboardInterrupt:
+        print("interrupted", file=sys.stderr)
+        return 130
+    except Exception as e:  # pragma: no cover -- last-resort guard
+        print(f"error: unexpected failure - {e}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":
