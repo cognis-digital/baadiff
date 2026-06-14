@@ -34,3 +34,6 @@ baadiff = "baadiff.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["baadiff"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
