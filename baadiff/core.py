@@ -216,7 +216,7 @@ _AUDIT_LOG = re.compile(
     r"log_group|logging\.(info|warning|error)|structured[_-]?log)"
 )
 _AUTH = re.compile(
-    r"(?i)(oauth|openid|jwt|authenticat|authoriz|rbac|@login_required|"
+    r"(?i)(oauth|openid|jwt|authenticat|authoriz|rbac|login_required|"
     r"ensure_authenticated|session\[|mfa|two[_-]?factor|bcrypt|argon2|pbkdf2)"
 )
 _BACKUP = re.compile(
