@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 
 from . import TOOL_NAME, TOOL_VERSION
-from .core import scan_path, score_findings, badge_for, SEVERITY_ORDER
+from .core import scan_path, score_findings, badge_for, to_sarif, SEVERITY_ORDER
 
 
 def _color(s: str, code: str, on: bool) -> str:
@@ -87,15 +87,25 @@ def _cmd_scan(args) -> int:
 
     if args.badge:
         Path(args.badge).write_text(badge_for(scorecard), encoding="utf-8")
+    if getattr(args, "sarif", None):
+        Path(args.sarif).write_text(to_sarif(scorecard), encoding="utf-8")
 
     if args.format == "json":
         print(json.dumps(scorecard.to_dict(), indent=2))
+    elif args.format == "sarif":
+        print(to_sarif(scorecard))
     else:
         use_color = sys.stdout.isatty() and not args.no_color
         print(_render_table(scorecard, use_color))
 
     # CI gate: non-zero when not shippable.
     return 0 if scorecard.shippable else 1
+
+
+def _cmd_mcp(args) -> int:
+    """Start the MCP stdio server (requires the optional 'mcp' extra)."""
+    from .mcp_server import serve
+    return serve()
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -120,15 +130,26 @@ def build_parser() -> argparse.ArgumentParser:
         description="Scan a file or directory for HIPAA Security Rule gaps.",
     )
     scan.add_argument("path", help="file or directory to scan")
-    scan.add_argument("--format", choices=("table", "json"), default="table",
-                      help="output format (default: table)")
+    scan.add_argument("--format", choices=("table", "json", "sarif"),
+                      default="table",
+                      help="output format: table|json|sarif (default: table)")
     scan.add_argument("--threshold", type=int, default=80, metavar="N",
                       help="min score (0-100) to be 'shippable' (default: 80)")
     scan.add_argument("--badge", metavar="FILE",
                       help="write a shields.io endpoint badge JSON to FILE")
+    scan.add_argument("--sarif", metavar="FILE",
+                      help="also write a SARIF 2.1.0 report to FILE "
+                           "(GitHub code-scanning)")
     scan.add_argument("--no-color", action="store_true",
                       help="disable ANSI colors in table output")
     scan.set_defaults(func=_cmd_scan)
+
+    mcp = sub.add_parser(
+        "mcp",
+        help="run the MCP stdio server (needs the 'mcp' extra)",
+        description="Expose baadiff scan() as an MCP tool for AI agents.",
+    )
+    mcp.set_defaults(func=_cmd_mcp)
     return p
 
 

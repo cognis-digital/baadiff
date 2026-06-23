@@ -23,6 +23,28 @@ from pathlib import Path
 from typing import Callable, Iterable, Optional
 
 # --------------------------------------------------------------------------- #
+# Tool identity
+# --------------------------------------------------------------------------- #
+# Resolve the version from the repo VERSION file when available so the CLI,
+# package metadata, and badge all agree; fall back to a pinned default.
+
+TOOL_NAME = "baadiff"
+
+
+def _resolve_version() -> str:
+    try:
+        vf = Path(__file__).resolve().parent.parent / "VERSION"
+        v = vf.read_text(encoding="utf-8").strip()
+        if v:
+            return v
+    except OSError:
+        pass
+    return "0.3.0"
+
+
+TOOL_VERSION = _resolve_version()
+
+# --------------------------------------------------------------------------- #
 # Data model
 # --------------------------------------------------------------------------- #
 
@@ -205,6 +227,75 @@ def _check_iam(text: str, fname: str, state: dict) -> list:
     return out
 
 
+# Additional deterministic scan checks (additive — broaden coverage).
+
+DEBUG_ON = re.compile(
+    r"(?i)\b(DEBUG\s*=\s*True|FLASK_DEBUG\s*=\s*1|app\.run\([^)]*debug\s*=\s*True"
+    r"|DJANGO_DEBUG\s*=\s*True|NODE_ENV\s*=\s*['\"]?development)"
+)
+# Encryption explicitly turned OFF (a stronger signal than mere absence).
+ENCRYPTION_DISABLED = re.compile(
+    r"(?i)(encrypt(ed|ion)?\s*[:=]\s*(false|no|0|off)|"
+    r"storage_encrypted\s*=\s*false|"
+    r"server_side_encryption[^\n]{0,40}(disabled|none))"
+)
+# Public object storage / buckets exposed.
+PUBLIC_BUCKET = re.compile(
+    r"(?i)(acl\s*[:=]\s*['\"]?public-read|public_access_block[^\n]{0,40}false|"
+    r"AllUsers|AuthenticatedUsers)"
+)
+# PHI-shaped identifiers logged in cleartext (SSN/MRN patterns in log calls).
+LOG_CALL = re.compile(r"(?i)\b(log(ger)?\.(info|debug|warning|error)|console\.log|print)\s*\(")
+SSN_LITERAL = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
+
+
+def _check_debug(text: str, fname: str, state: dict) -> list:
+    out = []
+    for i, line in enumerate(text.splitlines(), 1):
+        if DEBUG_ON.search(line):
+            out.append(("medium", i,
+                        "Debug mode enabled -- verbose error pages can leak "
+                        "ePHI and stack traces (164.308(a)(1) risk management).",
+                        "fail"))
+    return out
+
+
+def _check_encryption_disabled(text: str, fname: str, state: dict) -> list:
+    out = []
+    for i, line in enumerate(text.splitlines(), 1):
+        if ENCRYPTION_DISABLED.search(line):
+            out.append(("high", i,
+                        "Encryption explicitly disabled -- ePHI at rest must be "
+                        "protected (164.312(a)(2)(iv)).", "fail"))
+    return out
+
+
+def _check_public_storage(text: str, fname: str, state: dict) -> list:
+    out = []
+    low = fname.lower()
+    if not (low.endswith((".tf", ".json", ".yaml", ".yml", ".hcl")) or "policy" in low
+            or "bucket" in low):
+        return out
+    for i, line in enumerate(text.splitlines(), 1):
+        if PUBLIC_BUCKET.search(line):
+            out.append(("critical", i,
+                        "Public object-storage access -- ePHI must never be "
+                        "world-readable (164.312(a)(1) access control).",
+                        "fail"))
+    return out
+
+
+def _check_phi_in_logs(text: str, fname: str, state: dict) -> list:
+    out = []
+    for i, line in enumerate(text.splitlines(), 1):
+        if LOG_CALL.search(line) and SSN_LITERAL.search(line):
+            out.append(("high", i,
+                        "Possible PHI (SSN-shaped value) written to logs -- "
+                        "audit logs must not expose raw ePHI (164.312(b)).",
+                        "fail"))
+    return out
+
+
 # Positive-marker (presence) checks: scanned across the whole corpus.
 _ENCRYPTION_AT_REST = re.compile(
     r"(?i)(encrypt(ed|ion)?[\s_-]*(at[\s_-]*rest|enabled|true)|kms[_-]?key|"
@@ -259,6 +350,27 @@ CHECKS = [
     {"id": "BD009", "title": "Integrity verification (hashing/HMAC) present",
      "safeguard": "164.312(c)(2)", "kind": "presence",
      "marker": _INTEGRITY, "severity": "medium"},
+    {"id": "BD010", "title": "Debug mode disabled in deployable config",
+     "safeguard": "164.308(a)(1)(ii)(B)", "kind": "scan", "fn": _check_debug},
+    {"id": "BD011", "title": "Encryption at rest not explicitly disabled",
+     "safeguard": "164.312(a)(2)(iv)", "kind": "scan",
+     "fn": _check_encryption_disabled},
+    {"id": "BD012", "title": "No world-readable / public object storage",
+     "safeguard": "164.312(a)(1)", "kind": "scan", "fn": _check_public_storage},
+    {"id": "BD013", "title": "No raw PHI written to logs",
+     "safeguard": "164.312(b)", "kind": "scan", "fn": _check_phi_in_logs},
+    {"id": "BD014", "title": "Automatic logoff / session timeout configured",
+     "safeguard": "164.312(a)(2)(iii)", "kind": "presence",
+     "marker": re.compile(
+         r"(?i)(session[_-]?timeout|idle[_-]?timeout|auto[_-]?logoff|"
+         r"PERMANENT_SESSION_LIFETIME|max[_-]?age|expires_in|token[_-]?ttl)"),
+     "severity": "medium"},
+    {"id": "BD015", "title": "Contingency / data-retention policy documented",
+     "safeguard": "164.308(a)(7)(ii)", "kind": "presence",
+     "marker": re.compile(
+         r"(?i)(retention|contingency|incident[_-]?response|business[_-]?"
+         r"continuity|RTO|RPO|failover|replicat)"),
+     "severity": "low"},
 ]
 
 
@@ -415,3 +527,97 @@ def badge_for(scorecard: Scorecard) -> str:
         "message": f"{scorecard.score}/100 ({scorecard.grade})",
         "color": color,
     })
+
+
+# --------------------------------------------------------------------------- #
+# SARIF (code-scanning) output
+# --------------------------------------------------------------------------- #
+
+# SARIF severity maps to a "level": error | warning | note.
+_SARIF_LEVEL = {
+    "critical": "error",
+    "high": "error",
+    "medium": "warning",
+    "low": "note",
+    "info": "note",
+}
+
+
+def to_sarif(scorecard: Scorecard) -> str:
+    """Render a scorecard as a SARIF 2.1.0 log (GitHub code-scanning ready).
+
+    Only failing findings become SARIF results (a 'pass' is the absence of a
+    problem). Each distinct check id becomes a reusable rule descriptor.
+    """
+    rules_by_id: dict = {}
+    for c in CHECKS:
+        rules_by_id[c["id"]] = {
+            "id": c["id"],
+            "name": c["title"].replace(" ", ""),
+            "shortDescription": {"text": c["title"]},
+            "fullDescription": {
+                "text": f"HIPAA Security Rule safeguard {c['safeguard']}: "
+                        f"{c['title']}."},
+            "helpUri": "https://www.ecfr.gov/current/title-45/part-164",
+            "properties": {"safeguard": c["safeguard"]},
+        }
+
+    results = []
+    for f in scorecard.findings:
+        if f.status != "fail":
+            continue
+        loc = []
+        if f.file:
+            loc = [{
+                "physicalLocation": {
+                    "artifactLocation": {"uri": f.file.replace("\\", "/")},
+                    "region": {"startLine": max(1, f.line)},
+                }
+            }]
+        results.append({
+            "ruleId": f.check_id,
+            "level": _SARIF_LEVEL.get(f.severity, "warning"),
+            "message": {"text": f"[{f.safeguard}] {f.message}"},
+            "locations": loc,
+            "properties": {"severity": f.severity, "safeguard": f.safeguard},
+        })
+
+    sarif = {
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [{
+            "tool": {"driver": {
+                "name": TOOL_NAME,
+                "version": TOOL_VERSION,
+                "informationUri": "https://github.com/cognis-digital/baadiff",
+                "rules": list(rules_by_id.values()),
+            }},
+            "results": results,
+            "properties": {
+                "score": scorecard.score,
+                "grade": scorecard.grade,
+                "shippable": scorecard.shippable,
+            },
+        }],
+    }
+    return json.dumps(sarif, indent=2)
+
+
+# --------------------------------------------------------------------------- #
+# Convenience / compatibility API
+# --------------------------------------------------------------------------- #
+
+def scan(target, pass_threshold: int = 80) -> Scorecard:
+    """One-shot: walk ``target`` and return a scored :class:`Scorecard`.
+
+    Thin convenience wrapper used by the MCP server and embedders who want a
+    single call instead of ``score_findings(scan_path(...))``.
+    """
+    return score_findings(scan_path(target), pass_threshold=pass_threshold)
+
+
+def to_json(scorecard: Scorecard) -> str:
+    """Serialize a :class:`Scorecard` to indented JSON."""
+    if isinstance(scorecard, Scorecard):
+        return json.dumps(scorecard.to_dict(), indent=2)
+    return json.dumps(scorecard, indent=2)

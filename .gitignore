@@ -6,3 +6,9 @@ dist/
 build/
 .pytest_cache/
 .DS_Store
+# port build artifacts
+ports/rust/target/
+ports/go/baadiff
+ports/go/baadiff.exe
+node_modules/
+*.sarif

@@ -1,0 +1,61 @@
+name: ports
+on:
+  push:
+    paths:
+      - "ports/**"
+      - ".github/workflows/ports.yml"
+  pull_request:
+    paths:
+      - "ports/**"
+      - ".github/workflows/ports.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  javascript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Smoke test JS port
+        working-directory: ports/javascript
+        run: node test.js
+
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.21"
+      - name: Build + test Go port
+        working-directory: ports/go
+        run: |
+          go vet ./...
+          go build ./...
+          go test ./...
+
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build + test Rust port
+        working-directory: ports/rust
+        run: |
+          cargo build --locked || cargo build
+          cargo test
+
+  shell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint + smoke test shell port
+        working-directory: ports/shell
+        run: |
+          if command -v shellcheck >/dev/null 2>&1; then shellcheck baadiff.sh test.sh || true; fi
+          sh test.sh
