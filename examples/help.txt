@@ -1,0 +1,19 @@
+$ baadiff-emit --help
+
+usage: baadiff [-h] [--version] {scan,mcp} ...
+
+BAADIFF — scan a repo or manifest for HIPAA Security Rule gaps and produce an are-we-shippable readiness scorecard with a badge.
+
+positional arguments:
+  {scan,mcp}
+    scan      scan a path and emit a readiness scorecard
+    mcp       run the MCP stdio server (needs the 'mcp' extra)
+
+options:
+  -h, --help  show this help message and exit
+  --version   show program's version number and exit
+
+examples:
+  baadiff scan .
+  baadiff scan ./svc --format json > report.json
+  baadiff scan . --threshold 90 --badge badge.json

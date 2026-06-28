@@ -1,0 +1,3 @@
+$ baadiff-emit --version
+
+baadiff 0.4.0

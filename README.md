@@ -20,6 +20,66 @@ pip install cognis-baadiff
 baadiff scan .            # → prioritized findings in seconds
 ```
 
+
+<!-- cognis:example:start -->
+## 🔎 Example output
+
+Real, reproducible output from the tool — runs offline:
+
+```console
+$ baadiff-emit --version
+baadiff 0.4.0
+```
+
+```console
+$ baadiff-emit --help
+usage: baadiff [-h] [--version] {scan,mcp} ...
+
+BAADIFF — scan a repo or manifest for HIPAA Security Rule gaps and produce an are-we-shippable readiness scorecard with a badge.
+
+positional arguments:
+  {scan,mcp}
+    scan      scan a path and emit a readiness scorecard
+    mcp       run the MCP stdio server (needs the 'mcp' extra)
+
+options:
+  -h, --help  show this help message and exit
+  --version   show program's version number and exit
+
+examples:
+  baadiff scan .
+  baadiff scan ./svc --format json > report.json
+  baadiff scan . --threshold 90 --badge badge.json
+```
+
+> Blocks above are real `baadiff` output — reproduce them from a clone.
+
+**Sample result format** _(illustrative values — run on your own data for real findings):_
+
+```
+{
+"findings": [
+    {
+        "id": "1234567890",
+        "title": "Suspicious Network Traffic",
+        "description": "Anomalous network traffic detected from IP 192.168.1.100",
+        "created_at": "2023-02-16T14:30:00Z",
+        "updated_at": "2023-02-16T14:30:01Z",
+        "objects": [
+            {
+                "id": "obj1234567890",
+                "type": "indicator",
+                "name": "Suspicious IP",
+                "description": "Anomalous network traffic detected from IP 192.168.1.100"
+            }
+        ]
+    }
+]
+}
+```
+
+<!-- cognis:example:end -->
+
 ## Usage — step by step
 
 `baadiff` scans a repo or manifest for HIPAA Security Rule gaps and scores compliance.
