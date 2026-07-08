@@ -1,0 +1,20 @@
+[2026-07-08 01:53:22] === enhance · baadiff · words=120000 loc>=10000 langs=9 push=True ===
+[2026-07-08 01:53:27] phase DOCS — longform 120000-word corpus -> docs/corpus/
+[2026-07-08 12:37:57] phase POLYGLOT — expanding to >= 10000 LOC across 9 languages
+[2026-07-08 12:38:21]   facets: ['manifest_parser', 'control_mapper', 'gap_detector', 'evidence_collector', 'scoring_engine', 'report_generator']
+[2026-07-08 12:40:14]   +polyglot/python/manifest_parser.py  (loc now ~3654)
+[2026-07-08 12:42:07]   +polyglot/go/manifest_parser.go  (loc now ~4151)
+[2026-07-08 12:44:02]   +polyglot/rust/manifest_parser.rs  (loc now ~4632)
+[2026-07-08 12:45:36]   +polyglot/typescript/manifest_parser.ts  (loc now ~5009)
+[2026-07-08 12:47:31]   +polyglot/c/manifest_parser.c  (loc now ~5462)
+[2026-07-08 12:49:26]   +polyglot/cpp/manifest_parser.cpp  (loc now ~5865)
+[2026-07-08 12:51:21]   +polyglot/java/manifest_parser.java  (loc now ~6355)
+[2026-07-08 12:53:17]   +polyglot/ruby/manifest_parser.rb  (loc now ~6790)
+[2026-07-08 12:54:51]   +polyglot/csharp/manifest_parser.cs  (loc now ~7162)
+[2026-07-08 12:56:46]   +polyglot/python/control_mapper.py  (loc now ~7652)
+[2026-07-08 12:58:42]   +polyglot/go/control_mapper.go  (loc now ~8092)
+[2026-07-08 13:00:37]   +polyglot/rust/control_mapper.rs  (loc now ~8549)
+[2026-07-08 13:02:31]   +polyglot/typescript/control_mapper.ts  (loc now ~8958)
+[2026-07-08 13:04:24]   +polyglot/c/control_mapper.c  (loc now ~9418)
+[2026-07-08 13:06:17]   +polyglot/cpp/control_mapper.cpp  (loc now ~9826)
+[2026-07-08 13:08:12]   +polyglot/java/control_mapper.java  (loc now ~10297)
